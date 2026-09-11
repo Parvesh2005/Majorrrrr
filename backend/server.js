@@ -227,9 +227,7 @@ app.post(
 
 async function analyzeImage(imagePath) {
 
-    console.log(
-        "Sending image to Gemini..."
-    );
+    console.log("Sending image to Gemini...");
 
     const imageData =
         fs.readFileSync(imagePath);
@@ -237,55 +235,87 @@ async function analyzeImage(imagePath) {
     const base64Image =
         imageData.toString("base64");
 
+    const maxAttempts = 3;
 
-    const response =
-        await ai.models.generateContent({
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 
-            model:
-                "gemini-3.6-flash",
+        try {
 
-            contents: [
+            console.log(
+                `Gemini attempt ${attempt}/${maxAttempts}`
+            );
 
-                {
+            const response =
+                await ai.models.generateContent({
 
-                    role: "user",
+                    model: "gemini-3.6-flash",
 
-                    parts: [
-
-                        {
-
-                            inlineData: {
-
-                                mimeType:
-                                    "image/jpeg",
-
-                                data:
-                                    base64Image
-
-                            }
-
-                        },
+                    contents: [
 
                         {
 
-                            text:
-                                "Analyze this image and describe what is visible. " +
-                                "Identify important objects, people, text, surroundings, " +
-                                "and any notable observations. " +
-                                "Keep the response concise and easy to understand."
+                            role: "user",
+
+                            parts: [
+
+                                {
+
+                                    inlineData: {
+
+                                        mimeType: "image/jpeg",
+
+                                        data: base64Image
+
+                                    }
+
+                                },
+
+                                {
+
+                                    text:
+                                        "Analyze this image and describe what is visible. " +
+                                        "Identify important objects, people, text, surroundings, " +
+                                        "and any notable observations. " +
+                                        "Keep the response concise and easy to understand."
+
+                                }
+
+                            ]
 
                         }
 
                     ]
 
-                }
+                });
 
-            ]
+            return response.text;
 
-        });
+        } catch (error) {
 
+            console.error(
+                `Gemini attempt ${attempt} failed:`,
+                error.message
+            );
 
-    return response.text;
+            if (attempt < maxAttempts) {
+
+                console.log(
+                    "Retrying Gemini in 3 seconds..."
+                );
+
+                await new Promise(
+                    resolve => setTimeout(resolve, 3000)
+                );
+
+            } else {
+
+                throw error;
+
+            }
+
+        }
+
+    }
 
 }
 
