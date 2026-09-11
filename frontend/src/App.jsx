@@ -1,69 +1,206 @@
 import { useState } from "react";
 
+const BACKEND_URL =
+  "https://esp32-ai-camera-backend.onrender.com";
+
+const DEVICE_ID =
+  "ESP32CAM_001";
+
 function App() {
-  const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState("");
-  const [image, setImage] = useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [analysis, setAnalysis] =
+    useState("");
+
+  const [image, setImage] =
+    useState("");
+
+  const [status, setStatus] =
+    useState("Ready");
+
 
   const captureImage = async () => {
+
     setLoading(true);
+
     setAnalysis("");
 
-    try {
-      // Tell ESP32-CAM to capture
-      const captureResponse = await fetch(
-        "https://esp32-ai-camera-backend.onrender.com/device/ESP32CAM_001/capture",
-        {
-          method: "POST",
-        }
-      );
+    setImage("");
 
-      const captureData = await captureResponse.json();
+    setStatus(
+      "Requesting image from camera..."
+    );
+
+
+    try {
+
+      // 1. Tell ESP32 to capture
+
+      const captureResponse =
+        await fetch(
+          `${BACKEND_URL}/device/${DEVICE_ID}/capture`,
+          {
+            method: "POST"
+          }
+        );
+
+
+      if (!captureResponse.ok) {
+
+        throw new Error(
+          `Capture request failed: ${captureResponse.status}`
+        );
+
+      }
+
+
+      const captureData =
+        await captureResponse.json();
+
 
       if (!captureData.success) {
-        throw new Error(captureData.message);
-      }
 
-      // Wait for ESP32 + Gemini to finish
-      let result = null;
-
-      for (let i = 0; i < 20; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        const response = await fetch(
-          "https://esp32-ai-camera-backend.onrender.com/device/ESP32CAM_001/analysis"
+        throw new Error(
+          captureData.message ||
+          "Capture failed"
         );
 
-        result = await response.json();
+      }
+
+
+      setStatus(
+        "Camera capturing image..."
+      );
+
+
+      // 2. Poll backend
+
+      // Give ESP32 + Render + Gemini
+      // up to 60 seconds.
+
+      for (
+        let i = 0;
+        i < 60;
+        i++
+      ) {
+
+        await new Promise(
+          resolve =>
+            setTimeout(resolve, 1000)
+        );
+
+
+        const response =
+          await fetch(
+            `${BACKEND_URL}/device/${DEVICE_ID}/analysis`
+          );
+
+
+        if (!response.ok) {
+
+          continue;
+
+        }
+
+
+        const result =
+          await response.json();
+
+
+        // Only accept an analysis when
+        // both image AND analysis exist.
 
         if (
+          result.image &&
           result.analysis &&
-          result.image
+          result.analysisImage === result.image
         ) {
-          break;
+
+          setImage(
+            `${BACKEND_URL}/images/${result.image}`
+          );
+
+
+          setAnalysis(
+            result.analysis
+          );
+
+
+          setStatus(
+            "Analysis complete"
+          );
+
+
+          setLoading(false);
+
+          return;
+
         }
-      }
 
-      if (result?.analysis) {
-        setAnalysis(result.analysis);
 
-        setImage(
-          `https://esp32-ai-camera-backend.onrender.com/images/${result.image}`
+        setStatus(
+          `Processing image... ${i + 1}s`
         );
-      } else {
-        setAnalysis("Analysis is taking longer than expected.");
+
       }
+
+
+      setStatus(
+        "Analysis is taking longer than expected."
+      );
+
+      setAnalysis(
+        "The camera image was received, but Gemini is still processing it. Please try again in a moment."
+      );
+
+
     } catch (error) {
-      console.error(error);
-      setAnalysis("Something went wrong: " + error.message);
+
+      console.error(
+        error
+      );
+
+
+      setStatus(
+        "Error"
+      );
+
+
+      setAnalysis(
+        "Something went wrong: " +
+        error.message
+      );
+
     }
 
+
     setLoading(false);
+
   };
 
+
   return (
-    <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>ESP32 AI Camera</h1>
+
+    <div
+      style={{
+        padding: "40px",
+        fontFamily: "Arial",
+        maxWidth: "800px",
+        margin: "auto"
+      }}
+    >
+
+      <h1>
+        ESP32 AI Camera
+      </h1>
+
+
+      <p>
+        {status}
+      </p>
+
 
       <button
         onClick={captureImage}
@@ -71,37 +208,80 @@ function App() {
         style={{
           padding: "12px 24px",
           fontSize: "16px",
-          cursor: loading ? "not-allowed" : "pointer",
+          cursor:
+            loading
+              ? "not-allowed"
+              : "pointer"
         }}
       >
-        {loading ? "Capturing..." : "Capture Image"}
+
+        {loading
+          ? "Processing..."
+          : "Capture Image"}
+
       </button>
 
+
       {image && (
-        <div style={{ marginTop: "30px" }}>
-          <h2>Captured Image</h2>
+
+        <div
+          style={{
+            marginTop: "30px"
+          }}
+        >
+
+          <h2>
+            Captured Image
+          </h2>
+
+
           <img
             src={image}
             alt="ESP32 Camera"
             style={{
               maxWidth: "500px",
               width: "100%",
-              borderRadius: "10px",
+              borderRadius: "10px"
             }}
           />
+
         </div>
+
       )}
 
+
       {analysis && (
-        <div style={{ marginTop: "30px" }}>
-          <h2>AI Analysis</h2>
-          <p style={{ whiteSpace: "pre-line" }}>
+
+        <div
+          style={{
+            marginTop: "30px"
+          }}
+        >
+
+          <h2>
+            AI Analysis
+          </h2>
+
+
+          <p
+            style={{
+              whiteSpace: "pre-line",
+              lineHeight: "1.6"
+            }}
+          >
+
             {analysis}
+
           </p>
+
         </div>
+
       )}
+
     </div>
+
   );
+
 }
 
 export default App;
