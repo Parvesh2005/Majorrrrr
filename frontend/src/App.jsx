@@ -12,7 +12,7 @@ function App() {
     try {
       // Tell ESP32-CAM to capture
       const captureResponse = await fetch(
-        "http://192.168.29.58:3000/device/ESP32CAM_001/capture",
+        "https://esp32-ai-camera-backend.onrender.com/device/ESP32CAM_001/capture",
         {
           method: "POST",
         }
@@ -31,7 +31,7 @@ function App() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const response = await fetch(
-          "http://192.168.29.58:3000/device/ESP32CAM_001/analysis"
+          "https://esp32-ai-camera-backend.onrender.com/device/ESP32CAM_001/analysis"
         );
 
         result = await response.json();
@@ -48,7 +48,7 @@ function App() {
         setAnalysis(result.analysis);
 
         setImage(
-          `http://192.168.29.58:3000/images/${result.image}`
+          `https://esp32-ai-camera-backend.onrender.com/images/${result.image}`
         );
       } else {
         setAnalysis("Analysis is taking longer than expected.");
