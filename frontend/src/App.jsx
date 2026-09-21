@@ -20,6 +20,19 @@ function App() {
   const [status, setStatus] =
     useState("Ready");
 
+  const speakAnalysis = (text) => {
+    if (!text) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   const captureImage = async () => {
 
@@ -127,6 +140,7 @@ function App() {
             result.analysis
           );
 
+          speakAnalysis(result.analysis);
 
           setStatus(
             "Analysis complete"
@@ -251,17 +265,8 @@ function App() {
 
 
       {analysis && (
-
-        <div
-          style={{
-            marginTop: "30px"
-          }}
-        >
-
-          <h2>
-            AI Analysis
-          </h2>
-
+        <div style={{ marginTop: "30px" }}>
+          <h2>AI Analysis</h2>
 
           <p
             style={{
@@ -269,13 +274,23 @@ function App() {
               lineHeight: "1.6"
             }}
           >
-
             {analysis}
-
           </p>
 
+          <button
+            onClick={() => speakAnalysis(analysis)}
+            style={{
+              marginTop: "15px",
+              padding: "12px 20px",
+              fontSize: "16px",
+              cursor: "pointer",
+              borderRadius: "8px",
+              border: "none"
+            }}
+          >
+            🔊 Play Perception
+          </button>
         </div>
-
       )}
 
     </div>
