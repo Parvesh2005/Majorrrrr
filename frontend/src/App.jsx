@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Markdown from 'react-markdown'
+import removeMarkdown from 'remove-markdown'
 import './App.css'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || 'https://esp32-ai-camera-backend.onrender.com').replace(/\/$/, '')
 const DEVICE_ID = import.meta.env.VITE_DEVICE_ID || 'ESP32CAM_001'
 const stages = ['Capture', 'Understand', 'Listen']
+const descriptionElements = {
+  h1: 'h3', h2: 'h3', h3: 'h3', h4: 'h3', h5: 'h3', h6: 'h3',
+  img: ({ alt }) => <span>{alt}</span>,
+}
 const timeLabel = (date) => new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(date)
 
 function Icon({ name, size = 20, ...props }) {
@@ -98,7 +104,7 @@ function App() {
     stopSpeech()
     setSpeechError('')
     const version = speechVersion.current
-    const utterance = new SpeechSynthesisUtterance(text)
+    const utterance = new SpeechSynthesisUtterance(removeMarkdown(text))
     utterance.rate = rate
     utterance.onstart = () => { if (version === speechVersion.current) setSpeaking(true) }
     utterance.onend = () => { if (version === speechVersion.current) setSpeaking(false) }
@@ -226,7 +232,7 @@ function App() {
             <section className="description-panel" aria-labelledby="description-heading" aria-busy={busy}>
               <div className="panel-heading"><h2 id="description-heading"><Icon name="spark" size={18} /> Scene description</h2><span className="ai-label">GEMINI</span></div>
               <div className="description-content">
-                {analysis ? <><div className="result-label"><span className="status-dot online" />A SCENE, PUT INTO WORDS</div><p className="description-text">{analysis}</p><div className="result-meta"><Icon name="clock" size={14} /><span>{elapsed}s to describe</span><span>·</span><span>{capturedAt && timeLabel(capturedAt)}</span></div></> : <div className="description-empty"><div className="description-symbol"><Icon name="spark" size={28} /></div><h3>{busy ? 'From seeing to understanding.' : 'The world, in words.'}</h3><p>{phase === 'capturing' ? 'First, your camera captures the scene. Its description will appear here.' : phase === 'analyzing' ? 'Your image is here. Gemini is preparing a concise description of the scene.' : 'Your scene description will appear here, ready to read or hear aloud.'}</p>{busy && <div className="processing-label"><span className="processing-dots"><i /><i /><i /></span><span>Processing your scene</span></div>}</div>}
+                {analysis ? <><div className="result-label"><span className="status-dot online" />A SCENE, PUT INTO WORDS</div><div className="description-text"><Markdown skipHtml components={descriptionElements}>{analysis}</Markdown></div><div className="result-meta"><Icon name="clock" size={14} /><span>{elapsed}s to describe</span><span>·</span><span>{capturedAt && timeLabel(capturedAt)}</span></div></> : <div className="description-empty"><div className="description-symbol"><Icon name="spark" size={28} /></div><h3>{busy ? 'From seeing to understanding.' : 'The world, in words.'}</h3><p>{phase === 'capturing' ? 'First, your camera captures the scene. Its description will appear here.' : phase === 'analyzing' ? 'Your image is here. Gemini is preparing a concise description of the scene.' : 'Your scene description will appear here, ready to read or hear aloud.'}</p>{busy && <div className="processing-label"><span className="processing-dots"><i /><i /><i /></span><span>Processing your scene</span></div>}</div>}
                 {error && <div className="error-message" role="alert"><Icon name="alert" size={18} /><div><strong>Let’s try that again</strong><p>{error}</p></div></div>}
               </div>
               <div className="audio-controls"><div className={`audio-state ${speaking ? 'speaking' : ''}`}><span className="audio-bars" aria-hidden="true"><i /><i /><i /><i /><i /></span><div><strong>{speaking ? 'Reading your scene' : 'Listen to your surroundings'}</strong><span>{!speechSupported ? 'Speech unavailable in this browser' : autoSpeak ? 'Automatic playback is on' : 'Automatic playback is off'}</span></div></div><button className="button button-secondary" disabled={!analysis || !speechSupported} onClick={() => speaking ? stopSpeech() : speak(analysis)}><Icon name={speaking ? 'stop' : 'sound'} size={17} />{speaking ? 'Stop' : 'Listen'}</button></div>
@@ -238,7 +244,7 @@ function App() {
             <ol className="process-steps">{stages.map((stage, index) => <li key={stage} className={activeStage === index ? 'current' : activeStage > index ? 'done' : ''}><span className="step-number">{activeStage > index ? <Icon name="check" size={14} /> : `0${index + 1}`}</span><span>{stage}<small>{['ESP32 camera', 'Gemini vision', 'Spoken description'][index]}</small></span>{index < 2 && <span className="step-connector" />}</li>)}</ol>
           </section>
           <div className="workspace-note"><Icon name="sound" size={16} /><p>A little space to listen. Use your preferred audio device for spoken descriptions.</p><span>ON-DEMAND SCENE PERCEPTION</span></div>
-        </> : <section className="history-panel" aria-labelledby="history-heading"><div className="panel-heading"><h2 id="history-heading"><Icon name="clock" size={18} /> Recent captures</h2><span className="small-label">THIS SESSION · UP TO 8 CAPTURES</span></div>{history.length ? <div className="history-list">{history.map((item, index) => <button className="history-item" key={item.id} disabled={busy} onClick={() => openCapture(item)}><span className="history-number mono">{String(history.length - index).padStart(2, '0')}</span><span className="history-copy"><strong>{item.text}</strong><span>{timeLabel(item.date)} · {item.duration}s to describe</span></span><Icon name="arrow" /></button>)}</div> : <div className="history-empty"><Icon name="camera" size={40} /><h3>Every perspective has a beginning.</h3><p>Your completed captures will appear here during this session.</p><button className="button button-primary" onClick={() => setView('workspace')}>Go to workspace <Icon name="arrow" size={18} /></button></div>}<p className="history-footnote">Session history is kept in this tab and clears when you reload.</p></section>}
+        </> : <section className="history-panel" aria-labelledby="history-heading"><div className="panel-heading"><h2 id="history-heading"><Icon name="clock" size={18} /> Recent captures</h2><span className="small-label">THIS SESSION · UP TO 8 CAPTURES</span></div>{history.length ? <div className="history-list">{history.map((item, index) => <button className="history-item" key={item.id} disabled={busy} onClick={() => openCapture(item)}><span className="history-number mono">{String(history.length - index).padStart(2, '0')}</span><span className="history-copy"><strong>{removeMarkdown(item.text)}</strong><span>{timeLabel(item.date)} · {item.duration}s to describe</span></span><Icon name="arrow" /></button>)}</div> : <div className="history-empty"><Icon name="camera" size={40} /><h3>Every perspective has a beginning.</h3><p>Your completed captures will appear here during this session.</p><button className="button button-primary" onClick={() => setView('workspace')}>Go to workspace <Icon name="arrow" size={18} /></button></div>}<p className="history-footnote">Session history is kept in this tab and clears when you reload.</p></section>}
       </main>
       <footer><span><Icon name="glasses" size={19} /> Smart Vision <span className="footer-divider">/</span> Perception with purpose.</span><span>Prototype workspace <span className="footer-dot">·</span> ESP32 + Gemini</span></footer>
     </div>

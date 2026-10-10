@@ -85,7 +85,22 @@ input[type=range] { width: 100%; height: 32px; accent-color: var(--olive); }
 .description-empty h3 { font-family: 'DM Serif Display', Georgia, serif; font-size: 24px; font-weight: 400; letter-spacing: -.3px; margin-bottom: 12px; }
 .description-empty p { color: var(--ink-muted); font-size: 14px; line-height: 1.8; max-width: 280px; }
 .result-label { display: flex; align-items: center; gap: 8px; font-size: 9px; font-weight: 600; letter-spacing: 1.3px; color: var(--olive); margin-bottom: 20px; }
-.description-text { font-size: 16px; line-height: 1.85; white-space: pre-line; overflow-wrap: anywhere; }
+.description-text { font-size: 16px; line-height: 1.85; overflow-wrap: anywhere; }
+.description-text > * + * { margin-top: 16px; }
+.description-text p { white-space: pre-line; }
+.description-text strong { font-weight: 700; }
+.description-text h3 { font-size: 18px; font-weight: 650; line-height: 1.5; }
+.description-text ul, .description-text ol { padding-left: 24px; margin-bottom: 0; }
+.description-text li + li { margin-top: 8px; }
+.description-text li > p + p { margin-top: 8px; }
+.description-text blockquote { border-left: 2px solid var(--control-border); margin-left: 0; margin-right: 0; padding-left: 16px; color: var(--ink-secondary); }
+.description-text a { color: var(--olive); text-underline-offset: 3px; }
+.description-text code { background: var(--paper-inset); border-radius: 4px; padding: 2px 4px; font-size: .875em; }
+.description-text pre { overflow-x: auto; padding: 12px; background: var(--paper-inset); border-radius: var(--radius-sm); }
+.description-text pre code { padding: 0; }
+.description-text hr { border: 0; border-top: 1px solid var(--line); }
+.description-text > :first-child { margin-top: 0; }
+.description-text > :last-child { margin-bottom: 0; }
 .result-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--ink-muted); font-size: 10px; font-variant-numeric: tabular-nums; margin-top: 24px; }
 .audio-controls { border-top: 1px solid var(--line-soft); margin: 0 24px; padding: 20px 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .audio-state { display: flex; align-items: center; gap: 12px; }
