@@ -43,10 +43,6 @@ const wss = new WebSocket.Server({
 let devices = {};
 
 
-// =========================
-// HOME
-// =========================
-
 app.get("/", (req, res) => {
 
     res.json({
@@ -55,10 +51,6 @@ app.get("/", (req, res) => {
 
 });
 
-
-// =========================
-// DEVICE REGISTRATION
-// =========================
 
 app.post("/device/register", (req, res) => {
 
@@ -109,10 +101,6 @@ app.post("/device/register", (req, res) => {
 });
 
 
-// =========================
-// DEVICE STATUS
-// =========================
-
 app.get("/devices", (req, res) => {
 
     const result = {};
@@ -141,10 +129,6 @@ app.get("/devices", (req, res) => {
 
 });
 
-
-// =========================
-// CAPTURE COMMAND
-// =========================
 
 app.post(
     "/device/:deviceId/capture",
@@ -183,9 +167,6 @@ app.post(
         }
 
 
-        // Clear old analysis BEFORE
-        // requesting a new capture.
-
         device.latestAnalysis = null;
 
         device.analysisImage = null;
@@ -220,10 +201,6 @@ app.post(
     }
 );
 
-
-// =========================
-// GEMINI IMAGE ANALYSIS
-// =========================
 
 async function analyzeImage(imagePath) {
 
@@ -319,10 +296,6 @@ async function analyzeImage(imagePath) {
 
 }
 
-
-// =========================
-// RECEIVE IMAGE
-// =========================
 
 app.post(
     "/device/:deviceId/image",
